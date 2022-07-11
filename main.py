@@ -87,8 +87,8 @@ class MyApp(QWidget):
         time.sleep(4.0)
 
         #down the scroll
-        body = driver.find_element_by_tag_name('body')
-        last_page_height = driver.execute_script("return document.documentElement.scrollHeight")
+        # body = driver.find_element_by_tag_name('body')
+        # last_page_height = driver.execute_script("return document.documentElement.scrollHeight")
         
         # max size 50의 Queue 생성
         # 0.1sec * 50 = 5sec 동안 Scroll 업데이트가 없으면 스크롤 내리기 종료
@@ -148,70 +148,38 @@ class MyApp(QWidget):
         driver.close()
         html = BeautifulSoup(html0, 'html.parser')
 
-        comments_list = html.findAll({'ytd-comment-renderer'}, {'class':'style-scope ytd-comment-renderer'})
+        comments_list = html.findAll({'ytd-comment-renderer'}, {'class':'style-scope ytd-comment-thread-renderer'})
         replies_list = html.findAll({'ytd-comment-renderer'}, {'class':'style-scope ytd-comment-replies-renderer'})
-        # print (comments_list)
+        all_list = comments_list + replies_list
 
-
-        for j in range(len(comments_list)):
-        #contents of comment
-            comment = comments_list[j].find('yt-formatted-string',{'id':'content-text'}).text
+        for j in range(len(all_list)):
+            #comment
+            comment = all_list[j].find('yt-formatted-string',{'id':'content-text'}).text
             comment = comment.replace('\n', '') 
             comment = comment.replace('\t', '')
-            #print(comment) 
-            youtube_id = comments_list[j].find('a', {'id': 'author-text'}).span.text
+            #youtube_id 
+            youtube_id = all_list[j].find('a', {'id': 'author-text'}).span.text
             youtube_id = youtube_id.replace('\n', '') 
             youtube_id = youtube_id.replace('\t', '') 
             youtube_id = youtube_id.strip()
-        
-            raw_date = comments_list[j].find('yt-formatted-string', { 'class': 'published-time-text style-scope ytd-comment-renderer'})
+            #date
+            raw_date = all_list[j].find('yt-formatted-string', { 'class': 'published-time-text style-scope ytd-comment-renderer'})
             date = raw_date.a.text
-            
-            # try:
-            #     like_num = comments_list[j].find('span', {'id': 'vote-count-middle', 'class': 'style-scope ytd-comment-action-buttons-renderer', 'aria-label': re.compile('좋아요')}).text
-            #     like_num = like_num.replace('\n', '') 
-            #     like_num = like_num.replace('\t', '')
-            #     like_num = like_num.strip()
-            # except: like_num = 0
-        
-            # data = {'youtube_id': youtube_id, 'comment': comment, 'date': date, 'like_num': like_num}
+            #json
             data = {'youtube_id': youtube_id, 'comment': comment, 'date': date}
-
             data_list.append(data)
-        
-        for k in range(len(replies_list)):
-            comment = replies_list[k].find('yt-formatted-string',{'id':'content-text'}).text
-            comment = comment.replace('\n', '') 
-            comment = comment.replace('\t', '')
-            #print(comment) 
-            youtube_id = replies_list[k].find('a', {'id': 'author-text'}).span.text
-            youtube_id = youtube_id.replace('\n', '') 
-            youtube_id = youtube_id.replace('\t', '') 
-            youtube_id = youtube_id.strip()
-        
-            raw_date = replies_list[k].find('yt-formatted-string', { 'class': 'published-time-text style-scope ytd-comment-renderer'})
-            date = raw_date.a.text
-            
-            # try:
-            #     like_num = comments_list[j].find('span', {'id': 'vote-count-middle', 'class': 'style-scope ytd-comment-action-buttons-renderer', 'aria-label': re.compile('좋아요')}).text
-            #     like_num = like_num.replace('\n', '') 
-            #     like_num = like_num.replace('\t', '')
-            #     like_num = like_num.strip()
-            # except: like_num = 0
-        
-            # data = {'youtube_id': youtube_id, 'comment': comment, 'date': date, 'like_num': like_num}
-            data = {'youtube_id': youtube_id, 'comment': comment, 'date': date}
-
-            data_list.append(data)
-        # result_df = pd.DataFrame(data_list, columns=['youtube_id','comment','date','like_num'])    
+             
         result_df = pd.DataFrame(data_list, columns=['youtube_id','comment','date'])    
         url = ex.urlAddress.text()
         url2 = url.split('v=')
         file = f'./{url2[1]}.xlsx'
+
         print(f'url2 = {url2[1]}')
         print(f'file = {file}')
+        
         if os.path.isfile(file) is False:
             result_df.to_excel(f"./{url2[1]}.xlsx", index = False)
+
         sys.exit()
 
     def cancelButton(self):
